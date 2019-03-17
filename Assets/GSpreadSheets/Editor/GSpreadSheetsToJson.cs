@@ -38,6 +38,7 @@ using System.Net.Security;
 using System;
 using System.Net;
 using System.IO;
+using System.Text;
 using System.Threading;
 
 public class GSpreadSheetsToJson : EditorWindow {
@@ -153,6 +154,11 @@ public class GSpreadSheetsToJson : EditorWindow {
 				DownloadToJson();
 			}
 			GUI.backgroundColor = UnityEngine.Color.white;
+			if(GUILayout.Button("Download data \nthen convert to CSV files"))
+			{
+				progress = 0;
+				DownloadToCSV();
+			}
 			if((progress < 100)&&(progress > 0))
 			{
 				if(EditorUtility.DisplayCancelableProgressBar("Processing", progressMessage, progress/100))
@@ -174,6 +180,111 @@ public class GSpreadSheetsToJson : EditorWindow {
 			//Sometimes, Unity fire a "InvalidOperationException: Stack empty." bug when Editor want to end a group layout
 		}
 	}
+	
+	#region csv file
+	private void DownloadToCSV()
+	{
+		//Validate input
+		if(string.IsNullOrEmpty(spreadSheetKey))
+		{
+			Debug.LogError("spreadSheetKey can not be null!");
+			return;
+		}
+
+		Debug.Log ("Start downloading from key: " + spreadSheetKey);
+
+		//Authenticate
+		progressMessage = "Authenticating...";
+		var service = new SheetsService(new BaseClientService.Initializer()
+			{
+				HttpClientInitializer = GetCredential(),
+				ApplicationName = appName,
+			});
+
+		progress = 5;
+		EditorUtility.DisplayCancelableProgressBar("Processing", progressMessage, progress/100);
+		progressMessage = "Get list of spreadsheets...";
+		EditorUtility.DisplayCancelableProgressBar("Processing", progressMessage, progress/100);
+
+		Spreadsheet spreadSheetData = service.Spreadsheets.Get (spreadSheetKey).Execute ();
+		IList<Sheet> sheets = spreadSheetData.Sheets;
+
+		//if((feed == null)||(feed.Entries.Count <= 0))
+		if ((sheets == null) || (sheets.Count <= 0))
+		{
+			Debug.LogError("Not found any data!");
+			progress = 100;
+			EditorUtility.ClearProgressBar();
+			return;
+		}
+
+		progress = 15;
+
+		//For each sheet in received data, check the sheet name. If that sheet is the wanted sheet, add it into the ranges.
+		List<string> ranges = new List<string>();
+		foreach (Sheet sheet in sheets) {
+			if ((wantedSheetNames.Count <= 0) || (wantedSheetNames.Contains (sheet.Properties.Title))) {
+				ranges.Add(sheet.Properties.Title);
+			}
+		}
+			
+		SpreadsheetsResource.ValuesResource.BatchGetRequest request = service.Spreadsheets.Values.BatchGet(spreadSheetKey);
+		request.Ranges = ranges;
+		BatchGetValuesResponse response = request.Execute();
+
+		//For each wanted sheet, create a json file
+		foreach(ValueRange valueRange in response.ValueRanges)
+		{
+			string Sheetname = valueRange.Range.Split ('!')[0];
+			progressMessage = string.Format("Processing {0}...", Sheetname);
+			EditorUtility.DisplayCancelableProgressBar("Processing", progressMessage, progress/100);
+			//Create csv file
+			CreateCSVFile(Sheetname, outputDir, valueRange);
+			if(wantedSheetNames.Count <= 0)
+				progress += 85/(response.ValueRanges.Count);
+			else
+				progress += 85/wantedSheetNames.Count;
+		}
+		progress = 100;
+        AssetDatabase.Refresh();
+
+		Debug.Log ("Download completed.");
+	}
+	
+	private void CreateCSVFile(string fileName, string outputDirectory, ValueRange valueRange)
+	{
+		var rows = new List<List<string>>();
+		foreach (var row in valueRange.Values)
+		{
+			var data = new List<string>();
+			foreach (string cellValue in row)
+			{
+				data.Add(cellValue);
+			}
+			rows.Add(data);
+		}
+		
+		const string delimiter = ",";
+		var stringBuilder = new StringBuilder();
+		foreach (var row in rows)
+		{
+			stringBuilder.AppendLine(string.Join(delimiter, row));
+		}
+		
+		// Create directory to store the CSV file
+		if (!outputDirectory.EndsWith("/"))
+		{
+			outputDirectory += "/";
+		}
+		Directory.CreateDirectory(outputDirectory);
+		
+		var strmWriter = new StreamWriter(outputDirectory + fileName + ".csv", false, System.Text.Encoding.UTF8);
+		strmWriter.Write(stringBuilder.ToString());
+		strmWriter.Close();
+		
+		Debug.Log ("Created: " + fileName + ".csv");
+	}
+	#endregion
 	
 	private void DownloadToJson()
 	{
