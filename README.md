@@ -14,10 +14,14 @@
 
 - Client Id, Client Secret key등을 입력 해야 된다.
 - https://console.developers.google.com/?pli=1
-- 유형은 웹 애플리케이션으로 설정했습니다.
+- 유형은 기타를 선택 하였습니다.
 
 ![2](./images/2.png)
 ![3](./images/3.png)
+
+### API 사용 설정
+![6](./images/6.png)
+![7](./images/7.png)
 
 ### Spread Key 확인
 - Sheet key는 구글 시트 url 안에 있습니다. “spreadsheets/d/”와 “/edit” 사이에 있습니다.
