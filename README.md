@@ -10,7 +10,9 @@
 - 위 템플릿을 자신의 프로젝트에 가져오기 위한 새 스프레드 시트로 복사
 ![1](./images/1.png)
 
-### OAuth2[^1] 인증
+### OAuth2 인증
+
+> OAuth는 인터넷 사용자들이 비밀번호를 제공하지 않고 다른 웹사이트 상의 자신들의 정보에 대해 웹사이트나 애플리케이션의 접근 권한을 부여할 수 있는 공통적인 수단으로서 사용되는, 접근 위임을 위한 개방형 표준이다
 
 - Client Id, Client Secret key등을 입력 해야 된다.
 - https://console.developers.google.com/?pli=1
@@ -30,6 +32,5 @@
 ### Client Id, Client Secret key, Spread Key 입력
 - GSpreadSheetsToJson.cs 파일에 선언된 CLIENT_ID, CLIENT_SECRET에 자신의 키를 입력
 - Utility - GSpreadSheetsToJson 윈도우 창을 열면 Spread sheet key 입력란이 있고 여기에 자신에 시트에 해당되는 시크릿 키를 입력합니다.
-![5](./images/5.png)
 
-[^1]: OAuth는 인터넷 사용자들이 비밀번호를 제공하지 않고 다른 웹사이트 상의 자신들의 정보에 대해 웹사이트나 애플리케이션의 접근 권한을 부여할 수 있는 공통적인 수단으로서 사용되는, 접근 위임을 위한 개방형 표준이다
+![5](./images/5.png)
